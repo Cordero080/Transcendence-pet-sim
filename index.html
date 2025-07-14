@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet">
+  <!-- custom CSS -->
+  <link rel="stylesheet" href="main.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script  defer src="app.js"></script>
+  <script type="module" src="/main.js"></script>
+  <title> MY PET </title>
+</head>
+<body>
+  <!-- Page overlay - dims everything until Start is clicked -->
+  <div id="pageOverlay" class="page-overlay">
+    <div class="overlay-content">
+      <h2>🎮 Welcome to Transcendence! 🎮</h2>
+      <p>
+        <span class="word">A</span>
+        <span class="word">virtual</span>
+        <span class="word">lifeform</span>
+        <span class="word">is</span>
+        <span class="word">waiting</span>
+        <span class="word">to hatch</span>
+        <span class="word">from</span>
+        <span class="word">its</span>
+        <span class="word">shell</span>
+        <span class="word">to</span>
+        <span class="word">evolve</span>
+        <span class="word">beyond</span>
+        <span class="word">time</span>
+        <span class="word">and</span>
+        <span class="word">form.</span>
+      </p>
+      <p>
+        <span class="word">Feed,</span>
+        <span class="word">dance,</span>
+        <span class="word">sleep,</span>
+        <span class="word">have fun,</span>
+        <span class="word">evolve</span>
+        <span class="word">and</span>
+        <span class="word">transcend.</span>
+      </p>
+      <button class="OverlayStartButton" id="overlayStartButton">START GAME</button>
+    </div>
+  </div>
+
+  
+  THIS is the BODY
+  <header>
+    
+    <h1> TAMAGOTCHI </h1>
+    
+    <!-- navs differ from divs in it tells the browser thse are importint links, for screenreaders -->
+    
+</header>
+    <!-- the main is the majority of time user will be looking at, aka content in article of news -->
+   <main>
+    <div class="dropdown-container">
+      <button class="CornerRoundButton" id="infoDropdownBtn">&#9776;</button>
+      <!-- Dropdown menu (hidden by default) -->
+      <div id="infoDropdownMenu" class="dropdown-menu" style="display:none;">
+        <ul>
+          <li><strong>How to Transcend:</strong></li>
+          <li>Feed your pet when it hungers.</li>
+          <li>Dance ton energize and uplift its spirits</li>
+          <li>Let it rest when it tires.</li>
+          <li> Stay balanced - joy, rest, and nourishment are the keys.</li>
+          <li>Each stage brings new color and form.</li>
+          <li>Final form leads to transcendence - the end of the cylce.</li>
+          <li>Press START to begin, RESET to start over</li>
+        </ul>
+      </div>
+    </div>
+  
+    MAIN div 
+    <div class="screen"><div class="sonic-container">
+      <!-- Colorful glitch animation container - shown by default -->
+      <div id="colorfulGlitchDiv" class="colorful-glitch-container">
+        <div class="colorful-glitch-text">In Utero</div>
+        <div class="colorful-glitch-overlay"></div>
+        <div class="colorful-glitch-particles"></div>
+        <div class="colorful-glitch-border"></div>
+      </div>
+      <!-- Sonic gif - hidden initially, shown after start button -->
+      <img id="sonicImage" src="resources/sonic.gif" alt="sonic rotating animation" style="display:none;">
+  </div>
+  
+     
+  </div>
+    
+    <div class="infoBox">
+      
+      <div class="infoBox_controls">
+        <button class="Buttons">FEED</button>
+        <button class="Buttons">DANCE</button>
+        <button class="Buttons">SLEEP</button>
+      </div>
+      <div class="infoBox_petChat">..."Feed ME'
+        
+    </div>
+      </div>
+    </div>
+
+   </main>
+<div class="startButtonContainer">
+     <button class="StartButton">START</button>
+     <button class="ResetButton">RESET</button>
+   </div>
+  
+  
+  
+</body>
+</html>
