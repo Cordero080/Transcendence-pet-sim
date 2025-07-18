@@ -2,12 +2,21 @@ console.log("⚡️⚡️⚡️⚡️ ¡ ENGAGED ! ⚡️⚡️⚡️⚡️");
 
 // ⚠️ TEMPORARY EVOLUTION TESTING MODE ⚠️
 // - Stat decay is disabled
-// - Game over logic is disabled  
+// - Game over logic is disabled
 // - Aging is set to 1 second per age for rapid evolution testing
 // - Pet will evolve through all color stages without interruption
 
 // ────────────── GLOBAL VARIABLES ──────────────
 let myPet;
+let gameStarted = false; // Track if the game has been started
+let backgroundMusic; // Background music audio element
+
+// Button tracking for evolution system
+let buttonTracker = {
+  feed: false,
+  dance: false,
+  sleep: false,
+};
 
 const evolutionStages = [
   {
@@ -27,7 +36,7 @@ const evolutionStages = [
     stage: "green",
     age: 10,
     class: "green-form",
-    message: " I'm now Green!",
+    message: " I've evolved to green! This is DIFFERENT!",
   },
   {
     stage: "red",
@@ -44,12 +53,12 @@ const evolutionStages = [
 ];
 
 const gameSettings = {
-  ageInterval: 1000, // TEMPORARY: Fast aging for rapid evolution testing (1 second per age)
+  ageInterval: 10000, // TEMPORARY: Fast aging for rapid evolution testing (1 second per age)
 };
 
 // ────────────── PET CLASS ──────────────
 class Pet {
-  constructor(petName = "DefaultPetnameUGGO") {
+  constructor(petName = "Coco") {
     this.name = petName;
     this.age = 0;
     this.hunger = 0;
@@ -59,6 +68,8 @@ class Pet {
     this.ageInterval = null;
     this.decayInterval = null;
     this.showingEvolutionMessage = false; // Flag to track evolution messages
+    this.evolutionLevel = 0; // Track current evolution level (0-4 for blue,yellow,green,red,white)
+    this.showingActionMessage = false; // Flag to track feeding/dancing/sleeping messages
   }
 
   petAges() {
@@ -66,20 +77,20 @@ class Pet {
     this.age++;
     console.log(`🎂 Happy BDAY! Your pet is now ${this.age} years old!`);
 
-    // TEMPORARY: Commenting out age-based game over for rapid evolution testing
+    // TEMPORARY: Commenting out age-based evolution - now using button-based evolution
     /*
     // Check for age-based game over
     if (this.age >= 25) {
       this.gameOver("age");
       return;
     }
-    */
 
     // Data-driven evolution check
     const nextStage = evolutionStages.find((stage) => this.age === stage.age);
     if (nextStage) {
       this.evolve();
     }
+    */
   }
 
   hatching() {
@@ -99,9 +110,13 @@ class Pet {
     this.ageInterval = setInterval(() => {
       this.petAges();
 
-      // Only update chat if we're not currently showing an evolution message
+      // Only update chat if we're not currently showing an evolution message or action message
       const petChat = document.querySelector(".infoBox_petChat");
-      if (petChat && !this.showingEvolutionMessage) {
+      if (
+        petChat &&
+        !this.showingEvolutionMessage &&
+        !this.showingActionMessage
+      ) {
         const stageEmojis = {
           egg: "🥚",
           blue: "🔵",
@@ -264,6 +279,89 @@ class Pet {
     }
   }
 
+  // NEW: Button-based evolution method
+  evolveToNextStage() {
+    console.log(
+      `🌟 ${this.name} is evolving to next stage! Current level: ${this.evolutionLevel} 🌟`
+    );
+
+    // Don't evolve beyond white stage
+    if (this.evolutionLevel >= 4) {
+      console.log("Already at maximum evolution level");
+      return;
+    }
+
+    this.evolutionLevel++;
+
+    // Map evolution levels to stages
+    const stageMap = {
+      0: {
+        stage: "blue",
+        message: " I've evolved into Blue Form! So, this is life!",
+      },
+      1: {
+        stage: "yellow",
+        message:
+          " The foolish seek joy in the distance, and the wise grow it under their feet!",
+      },
+      2: { stage: "green", message: " I'm now Green! Growing stronger!" },
+      3: {
+        stage: "red",
+        message: " I've become Red! Power surges through me!",
+      },
+      4: {
+        stage: "white",
+        message: "⚪ I have transcended to White Form! Ready for the beyond...",
+      },
+    };
+
+    const currentEvolution = stageMap[this.evolutionLevel];
+
+    if (!currentEvolution) {
+      console.log("No evolution found for level:", this.evolutionLevel);
+      return;
+    }
+
+    // Update stage and display evolution message
+    this.stage = currentEvolution.stage;
+    this.showingEvolutionMessage = true;
+
+    const petChat = document.querySelector(".infoBox_petChat");
+    if (petChat) {
+      petChat.textContent = `✨ Evolving...`;
+
+      // Show evolution message after a brief delay
+      setTimeout(() => {
+        if (petChat) {
+          const stageEmojis = {
+            blue: "🔵",
+            yellow: "🟡",
+            green: "🟢",
+            red: "🔴",
+            white: "⚪",
+          };
+          const emoji = stageEmojis[currentEvolution.stage] || "✨";
+          petChat.textContent = `Level ${this.evolutionLevel + 1} | ${emoji} ${
+            currentEvolution.stage.charAt(0).toUpperCase() +
+            currentEvolution.stage.slice(1)
+          } Form - ${currentEvolution.message}`;
+        }
+
+        // Clear the evolution message flag after displaying
+        setTimeout(() => {
+          this.showingEvolutionMessage = false;
+        }, 3000);
+      }, 1000);
+    }
+
+    // Apply visual changes
+    updatePetVisual(currentEvolution.stage);
+
+    console.log(
+      `Evolution complete! New stage: ${currentEvolution.stage}, Level: ${this.evolutionLevel}`
+    );
+  }
+
   triggerTranscendence() {
     console.log("🌟 TRANSCENDENCE INITIATED! 🌟");
 
@@ -324,96 +422,223 @@ class Pet {
   }
 } // End of Pet class
 
+// ────────────── BUTTON TRACKING FUNCTIONS ──────────────
+function markButtonPressed(buttonType) {
+  if (buttonTracker.hasOwnProperty(buttonType)) {
+    buttonTracker[buttonType] = true;
+    console.log(
+      `${buttonType} button pressed - tracking updated:`,
+      buttonTracker
+    );
+    updateEvolutionIndicators();
+  }
+}
+
+function checkButtonEvolution() {
+  // Check if all three buttons have been pressed
+  if (buttonTracker.feed && buttonTracker.dance && buttonTracker.sleep) {
+    console.log("🌟 All buttons pressed! Evolution triggered!");
+
+    // Special handling for white stage (transcendence)
+    if (myPet && myPet.evolutionLevel === 4) {
+      const petChat = document.querySelector(".infoBox_petChat");
+      if (petChat) {
+        petChat.textContent =
+          "⚪ Transcendence imminent... preparing for the beyond...";
+      }
+
+      // 5-second delay before transcendence
+      setTimeout(() => {
+        myPet.triggerTranscendence();
+      }, 5000);
+    } else {
+      // Normal evolution
+      if (myPet) {
+        myPet.evolveToNextStage();
+      }
+    }
+
+    // Reset button tracker for next evolution cycle
+    resetButtonTracker();
+  }
+}
+
+function resetButtonTracker() {
+  buttonTracker = {
+    feed: false,
+    dance: false,
+    sleep: false,
+  };
+  updateEvolutionIndicators();
+  console.log("Button tracker reset for next evolution cycle");
+}
+
+function updateEvolutionIndicators() {
+  // Update visual indicators under each button
+  const feedIndicator = document.querySelector("#hungerTimer");
+  const danceIndicator = document.querySelector("#funTimer");
+  const sleepIndicator = document.querySelector("#sleepTimer");
+
+  // Add indicators to show which buttons have been pressed
+  if (feedIndicator) {
+    const indicator = buttonTracker.feed ? " ✅" : " ⭕";
+    if (
+      !feedIndicator.textContent.includes("✅") &&
+      !feedIndicator.textContent.includes("⭕")
+    ) {
+      feedIndicator.textContent += indicator;
+    } else {
+      feedIndicator.textContent = feedIndicator.textContent.replace(
+        / [✅⭕]/,
+        indicator
+      );
+    }
+  }
+
+  if (danceIndicator) {
+    const indicator = buttonTracker.dance ? " ✅" : " ⭕";
+    if (
+      !danceIndicator.textContent.includes("✅") &&
+      !danceIndicator.textContent.includes("⭕")
+    ) {
+      danceIndicator.textContent += indicator;
+    } else {
+      danceIndicator.textContent = danceIndicator.textContent.replace(
+        / [✅⭕]/,
+        indicator
+      );
+    }
+  }
+
+  if (sleepIndicator) {
+    const indicator = buttonTracker.sleep ? " ✅" : " ⭕";
+    if (
+      !sleepIndicator.textContent.includes("✅") &&
+      !sleepIndicator.textContent.includes("⭕")
+    ) {
+      sleepIndicator.textContent += indicator;
+    } else {
+      sleepIndicator.textContent = sleepIndicator.textContent.replace(
+        / [✅⭕]/,
+        indicator
+      );
+    }
+  }
+}
+
+// ────────────── BUTTON STATE MANAGEMENT ──────────────
+function updateButtonStates() {
+  const buttons = document.querySelectorAll(".Buttons");
+  const feedButton = buttons[0];
+  const danceButton = buttons[1];
+  const sleepButton = buttons[2];
+
+  if (gameStarted) {
+    // Enable buttons visually
+    feedButton?.classList.remove("disabled");
+    danceButton?.classList.remove("disabled");
+    sleepButton?.classList.remove("disabled");
+    console.log("Action buttons enabled - game has started!");
+  } else {
+    // Disable buttons visually
+    feedButton?.classList.add("disabled");
+    danceButton?.classList.add("disabled");
+    sleepButton?.classList.add("disabled");
+    console.log("Action buttons disabled - game not started yet.");
+  }
+}
+
 // ────────────── GAME FUNCTIONS ──────────────
 function startGame() {
-  console.log("⚡️⚡️⚡️ Welcome to the Pet Simulator Game! ⚡️⚡️⚡️");
+  console.log("🎮 Starting new game...");
   myPet = new Pet("Sonic");
-  console.log("myPet created:", myPet);
+  console.log("Pet created:", myPet);
 
-  // Don't start hatching here - wait for START button click
-  console.log("Pet created! Click START to hatch your pet.");
+  // Initialize evolution indicators
+  resetButtonTracker();
+
+  // Note: buttons remain disabled until hatching completes
+  updateButtonStates();
 }
 
 function resetGame() {
-  // Stop any existing pet intervals
+  console.log("🔄 Resetting game...");
+
+  // Reset game state
+  gameStarted = false; // Disable action buttons
+  updateButtonStates(); // Update visual state of buttons
+
+  // Stop any existing pet timers
   if (myPet) {
     myPet.stopAlltimers();
   }
 
-  const colorfulGlitchDiv = document.getElementById("colorfulGlitchDiv");
+  // Reset button tracking
+  resetButtonTracker();
+
+  // Hide sonic and show egg again
   const sonicImage = document.getElementById("sonicImage");
-  const sonicContainer = document.querySelector(".sonic-container");
-  const petChat = document.querySelector(".infoBox_petChat");
+  const colorfulGlitchDiv = document.getElementById("colorfulGlitchDiv");
 
-  if (colorfulGlitchDiv && sonicImage && sonicContainer) {
-    console.log("Resetting game to egg state...");
-
-    // Reset visual elements - show egg, hide Sonic
+  if (sonicImage) {
     sonicImage.style.display = "none";
+    sonicImage.src = "resources/sonic.gif";
+    // Remove all evolution classes
     sonicImage.classList.remove(
-      "hatching",
-      "born",
       "blue-form",
-      "green-form",
       "yellow-form",
+      "green-form",
       "red-form",
       "white-form",
+      "hatching",
+      "born",
       "transcending"
     );
-    sonicContainer.classList.remove("hatching", "transcending");
+  }
+
+  if (colorfulGlitchDiv) {
     colorfulGlitchDiv.style.display = "flex";
     colorfulGlitchDiv.classList.remove("hatching");
-    sonicImage.src = "resources/sonic.gif";
-    sonicImage.alt = "sonic rotating animation";
-
-    // Reset any death visual effects and transcendence effects
-    sonicImage.style.filter = "";
-    sonicImage.style.opacity = "1";
-    sonicImage.style.transform = "";
-    sonicContainer.style.transform = "";
-    sonicContainer.style.opacity = "1";
-
-    // Clean up any light particles from transcendence
-    const lightParticles = sonicContainer.querySelectorAll(".light-particle");
-    lightParticles.forEach((particle) => {
-      if (particle.parentNode) {
-        particle.parentNode.removeChild(particle);
-      }
-    });
-
-    // Reset pet chat
-    if (petChat) {
-      petChat.textContent = "Age: 0 | 🥚 Egg Form | ...\"Feed ME'";
-    }
-
-    // Reset timers
-    const hungerTimer = document.getElementById("hungerTimer");
-    const funTimer = document.getElementById("funTimer");
-    const sleepTimer = document.getElementById("sleepTimer");
-
-    if (hungerTimer) {
-      hungerTimer.textContent = "Hunger: 0";
-      hungerTimer.classList.remove("low", "medium", "high");
-      hungerTimer.classList.add("high"); // Low hunger is good (green)
-    }
-    if (funTimer) {
-      funTimer.textContent = "Fun: 10";
-      funTimer.classList.remove("low", "medium", "high");
-      funTimer.classList.add("high"); // High fun is good (green)
-    }
-    if (sleepTimer) {
-      sleepTimer.textContent = "Sleep: 0";
-      sleepTimer.classList.remove("low", "medium", "high");
-      sleepTimer.classList.add("high"); // Low sleepiness is good (green)
-    }
-
-    // Create new pet instance (ready to hatch again)
-    myPet = new Pet("Sonic");
-
-    console.log(
-      "Game reset complete - egg is visible again! Click START to hatch."
-    );
   }
+
+  // Remove transcending classes from container
+  const sonicContainer = document.querySelector(".sonic-container");
+  if (sonicContainer) {
+    sonicContainer.classList.remove("transcending");
+  }
+
+  // Reset all timer displays
+  const hungerTimer = document.getElementById("hungerTimer");
+  const funTimer = document.getElementById("funTimer");
+  const sleepTimer = document.getElementById("sleepTimer");
+  const petChat = document.querySelector(".infoBox_petChat");
+
+  if (petChat) {
+    petChat.textContent = "...\"Feed ME'";
+  }
+
+  if (hungerTimer) {
+    hungerTimer.textContent = "Hunger: 0";
+    hungerTimer.classList.remove("low", "medium", "high");
+    hungerTimer.classList.add("high"); // Low hunger is good (green)
+  }
+  if (funTimer) {
+    funTimer.textContent = "Fun: 10";
+    funTimer.classList.remove("low", "medium", "high");
+    funTimer.classList.add("high"); // High fun is good (green)
+  }
+  if (sleepTimer) {
+    sleepTimer.textContent = "Sleep: 0";
+    sleepTimer.classList.remove("low", "medium", "high");
+    sleepTimer.classList.add("high"); // Low sleepiness is good (green)
+  }
+
+  // Create new pet instance (ready to hatch again)
+  myPet = new Pet("Sonic");
+
+  console.log(
+    "Game reset complete - egg is visible again! Click START to hatch."
+  );
 }
 
 function showSonic() {
@@ -440,6 +665,8 @@ function showSonic() {
 
         // NOW start the pet's lifecycle
         console.log("Sonic hatched! Starting pet lifecycle...");
+        gameStarted = true; // Enable action buttons
+        updateButtonStates(); // Update visual state of buttons
         myPet.hatching();
         myPet.startStatDecay();
         updateTimers(); // Initialize timers
@@ -467,6 +694,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupFeedAndDance();
   setupOverlayAndReset();
   setup3DTextHover();
+  setupBackgroundMusic(); // Initialize background music
+  updateButtonStates(); // Initialize buttons as disabled
   //startGame(); // Call to begin game logic
 });
 
@@ -494,70 +723,112 @@ function setupFeedAndDance() {
   const buttons = document.querySelectorAll(".Buttons");
   const feedButton = buttons[0];
   const danceButton = buttons[1];
-  const sleepButton = buttons[2]; // NEW
+  const sleepButton = buttons[2];
   const petChat = document.querySelector(".infoBox_petChat");
   const sonicImage = document.getElementById("sonicImage");
 
   if (feedButton && sonicImage) {
     feedButton.addEventListener("click", () => {
-      if (!myPet) return;
+      if (!myPet || !gameStarted) {
+        console.log("Game not started yet! Click START to begin.");
+        return;
+      }
 
       myPet.hunger = Math.max(0, myPet.hunger - 2); // decrease hunger
 
-      // Only update chat if not showing evolution message
+      // Set action message flag and display feeding message
+      myPet.showingActionMessage = true;
       if (!myPet.showingEvolutionMessage) {
-        petChat.textContent = "🍽️ Yum! Thanks for feeding me!";
+        petChat.textContent = "🍽️ Yum! THANKS! I'm not a fan of being HANGRY!";
       }
 
       console.log("Hunger level:", myPet.hunger);
+
+      // Mark button as pressed and check for evolution
+      markButtonPressed("feed");
+      checkButtonEvolution();
+
       updateTimers(); // Update timers immediately
 
       if (sonicImage.style.display !== "none") {
         sonicImage.src = "resources/sonic-eats-5.gif";
         setTimeout(() => {
           sonicImage.src = "resources/sonic.gif";
+          myPet.showingActionMessage = false; // Clear action message flag
           render(); // Update status after animation
-        }, 6000);
+        }, 8000); // Increased to 8 seconds to let eating animation complete fully
       }
     });
   }
 
   if (danceButton && sonicImage) {
     danceButton.addEventListener("click", () => {
-      if (!myPet) return;
+      if (!myPet || !gameStarted) {
+        console.log("Game not started yet! Click START to begin.");
+        return;
+      }
 
       myPet.fun = Math.min(10, myPet.fun + 2); // increase fun
 
-      // Only update chat if not showing evolution message
+      // Set action message flag and display dancing message
+      myPet.showingActionMessage = true;
       if (!myPet.showingEvolutionMessage) {
-        petChat.textContent = "💃 Let's groove!";
+        petChat.textContent =
+          "Aww, yeah! Let's get BUSY! Watch me bust these interglactic MOVES!";
       }
 
       console.log("Fun level:", myPet.fun);
+
+      // Mark button as pressed and check for evolution
+      markButtonPressed("dance");
+      checkButtonEvolution();
+
       updateTimers(); // Update timers immediately
 
       if (sonicImage.style.display !== "none") {
         sonicImage.src = "resources/sonic-dance2.gif";
         setTimeout(() => {
           sonicImage.src = "resources/sonic.gif";
+          myPet.showingActionMessage = false; // Clear action message flag
           render(); // Update status after animation
-        }, 13000);
+        }, 26000); // Doubled to 26 seconds to let dance animation run twice completely
       }
     });
   }
 
   if (sleepButton && sonicImage) {
     sleepButton.addEventListener("click", () => {
-      if (!myPet) return;
+      if (!myPet || !gameStarted) {
+        console.log("Game not started yet! Click START to begin.");
+        return;
+      }
 
       myPet.sleepiness = Math.max(0, myPet.sleepiness - 2); // decrease sleepiness
 
-      // Only update chat if not showing evolution message
+      // Set action message flag and display sleeping message
+      myPet.showingActionMessage = true;
       if (!myPet.showingEvolutionMessage) {
         petChat.textContent = "😴 Zzzz... That nap helped!";
       }
 
       console.log("Sleepiness level:", myPet.sleepiness);
+
+      // Mark button as pressed and check for evolution
+      markButtonPressed("sleep");
+      checkButtonEvolution();
+
+      // Display sleeping animation
+      if (sonicImage.style.display !== "none") {
+        sonicImage.src = "resources/sonic-sleeps.gif";
+
+        // Return to normal after sleeping animation completes fully
+        setTimeout(() => {
+          sonicImage.src = "resources/sonic.gif";
+          myPet.showingActionMessage = false; // Clear action message flag
+          render(); // Update status after animation
+        }, 6000); // Increased to 6 seconds to let sleeping animation complete fully
+      }
+
       updateTimers(); // Update timers immediately
       render(); // Update status immediately
     });
@@ -565,7 +836,6 @@ function setupFeedAndDance() {
 }
 
 // Overlay Start, Reset, and Sonic Reveal
-
 function setupOverlayAndReset() {
   const overlay = document.getElementById("pageOverlay");
   const overlayStartBtn = document.getElementById("overlayStartButton");
@@ -682,6 +952,9 @@ function updateTimers() {
       sleepTimer.classList.add("high"); // Green for low sleepiness (good)
     }
   }
+
+  // Update evolution indicators too
+  updateEvolutionIndicators();
 }
 
 function render() {
@@ -692,8 +965,8 @@ function render() {
   // Update timer displays
   updateTimers();
 
-  // Only update chat if not showing evolution message
-  if (!myPet.showingEvolutionMessage) {
+  // Only update chat if not showing evolution message or action message
+  if (!myPet.showingEvolutionMessage && !myPet.showingActionMessage) {
     if (myPet.hunger >= 8) {
       petChat.textContent = "😩 I'm starving!";
     } else if (myPet.sleepiness >= 8) {
@@ -701,7 +974,7 @@ function render() {
     } else if (myPet.fun <= 2) {
       petChat.textContent = "😐 I'm bored...";
     } else {
-      petChat.textContent = "😺 I'm feeling okay!";
+      petChat.textContent = "😺 HEY! I'm so stoked to see you!";
     }
   }
 }
@@ -754,4 +1027,57 @@ function updatePetVisual(stage) {
     // Force a repaint to ensure the style is applied
     sonicImage.offsetHeight; // Trigger reflow
   }, 100);
+}
+
+// Background music setup and controls
+function setupBackgroundMusic() {
+  backgroundMusic = document.getElementById("backgroundMusic");
+
+  if (backgroundMusic) {
+    // Set volume to a comfortable level
+    backgroundMusic.volume = 0.3;
+
+    // Try to play music when page loads
+    // Note: Most browsers require user interaction before playing audio
+    const playPromise = backgroundMusic.play();
+
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("🎵 Background music started playing");
+        })
+        .catch((error) => {
+          console.log("🎵 Autoplay prevented by browser:", error);
+          console.log("🎵 Music will start when user interacts with the page");
+
+          // Add event listener to start music on first user interaction
+          const startMusicOnInteraction = () => {
+            backgroundMusic
+              .play()
+              .then(() => {
+                console.log(
+                  "🎵 Background music started after user interaction"
+                );
+              })
+              .catch((err) => {
+                console.log("🎵 Failed to start music:", err);
+              });
+
+            // Remove the event listener after first use
+            document.removeEventListener("click", startMusicOnInteraction);
+            document.removeEventListener("keydown", startMusicOnInteraction);
+          };
+
+          // Listen for any user interaction
+          document.addEventListener("click", startMusicOnInteraction, {
+            once: true,
+          });
+          document.addEventListener("keydown", startMusicOnInteraction, {
+            once: true,
+          });
+        });
+    }
+  } else {
+    console.log("🎵 Background music element not found");
+  }
 }
