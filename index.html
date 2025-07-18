@@ -40,6 +40,8 @@
         <span class="word">have fun,</span>
         <span class="word">evolve</span>
         <span class="word">and</span>
+      </p>
+      <p>
         <span class="word">transcend.</span>
       </p>
       <button class="OverlayStartButton" id="overlayStartButton">START GAME</button>
@@ -93,9 +95,18 @@
     <div class="infoBox">
       
       <div class="infoBox_controls">
-        <button class="Buttons">FEED</button>
-        <button class="Buttons">DANCE</button>
-        <button class="Buttons">SLEEP</button>
+        <div class="button-container">
+          <button class="Buttons">FEED</button>
+          <div class="timer-display" id="hungerTimer">Hunger: 0</div>
+        </div>
+        <div class="button-container">
+          <button class="Buttons">DANCE</button>
+          <div class="timer-display" id="funTimer">Fun: 10</div>
+        </div>
+        <div class="button-container">
+          <button class="Buttons">SLEEP</button>
+          <div class="timer-display" id="sleepTimer">Sleep: 0</div>
+        </div>
       </div>
       <div class="infoBox_petChat">..."Feed ME'
         

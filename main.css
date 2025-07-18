@@ -147,6 +147,7 @@ main {
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
+  align-content:space-between
   width: 30%;
   height: 95%;
   gap: 6px;
@@ -163,6 +164,40 @@ canvas {
   border: solid 2px rgb(249, 90, 10);
   width: 70%;
   position: relative;
+  font-size: 2.8vh; /* Increased font size for better readability */
+  padding: 12px; /* Increased padding for better spacing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  word-wrap: break-word; /* Enable text wrapping */
+  white-space: normal; /* Allow text to wrap to multiple lines */
+  line-height: 1.4; /* Better line spacing for readability */
+  
+  /* Colorful gradient text effect for better legibility */
+  background: linear-gradient(45deg, 
+    #ff6bb3,     /* Pink */
+    #80b3ff,     /* Light blue */
+    #b380ff,     /* Purple */
+    #66ff99,     /* Green */
+    #ffb366,     /* Orange */
+    #ff6bb3      /* Pink again for seamless loop */
+  );
+  background-size: 200% 200%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: bold;
+  
+  /* Subtle glow effect behind the gradient */
+  text-shadow: 
+    0 0 10px rgba(255, 107, 179, 0.3),    /* Pink glow */
+    0 0 15px rgba(128, 179, 255, 0.3),    /* Blue glow */
+    0 0 20px rgba(179, 128, 255, 0.3);    /* Purple glow */
+  
+  /* Animate the gradient for extra visual appeal */
+  animation: gradientShift 2.5s ease infinite;
 }
 
 /* ============================================================================
@@ -172,10 +207,20 @@ canvas {
   font-family: "doto";
   color: rgb(246, 234, 13);
   background-color: blue;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
   font-weight: bold;
-  padding: 8px 8px;
+  padding: 1rem 0;
   margin: 0 4px;
   box-sizing: border-box;
+}
+
+button.Buttons {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .startButtonContainer {
@@ -230,6 +275,37 @@ canvas {
 .CornerRoundButton:hover {
   background: #2323ff;
 }
+
+/* Button container and timer display styles */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.timer-display {
+  font-family: "doto";
+  font-size: 0.7em;
+  color: rgba(96, 241, 108, 0.923);
+  background-color: rgba(47, 6, 150, 0.31);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 60px;
+  font-weight: bold;
+  gap: 2px;
+}
+
+/* Color coding for different stat levels */
+.timer-display.low { color: #ff6b6b; }    /* Red for bad levels */
+.timer-display.medium { color: #ffd93d; } /* Yellow for medium levels */
+.timer-display.high { color: #6bcf7f; }   /* Green for good levels */
 
 /* ============================================================================
    DROPDOWN MENU SYSTEM
@@ -399,13 +475,15 @@ canvas {
 .overlay-content p:first-of-type .word:nth-child(15) { animation-delay: 4.4s; animation-name: wordDropRightToLeft; }
 
 /* Staggered delays for second paragraph words */
-.overlay-content p:last-of-type .word:nth-child(1) { animation-delay: 5.0s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
-.overlay-content p:last-of-type .word:nth-child(2) { animation-delay: 5.3s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
-.overlay-content p:last-of-type .word:nth-child(3) { animation-delay: 5.7s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
-.overlay-content p:last-of-type .word:nth-child(4) { animation-delay: 5.9s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
-.overlay-content p:last-of-type .word:nth-child(5) { animation-delay: 6.2s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
-.overlay-content p:last-of-type .word:nth-child(6) { animation-delay: 6.5s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
-.overlay-content p:last-of-type .word:nth-child(7) { animation-delay: 7s; animation-name: mysteriousDrop; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+.overlay-content p:nth-of-type(2) .word:nth-child(1) { animation-delay: 5.0s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+.overlay-content p:nth-of-type(2) .word:nth-child(2) { animation-delay: 5.3s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+.overlay-content p:nth-of-type(2) .word:nth-child(3) { animation-delay: 5.7s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+.overlay-content p:nth-of-type(2) .word:nth-child(4) { animation-delay: 5.9s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+.overlay-content p:nth-of-type(2) .word:nth-child(5) { animation-delay: 6.2s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+.overlay-content p:nth-of-type(2) .word:nth-child(6) { animation-delay: 6.5s; animation-name: mysteriousFade; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
+
+/* Third paragraph (transcend) - special animation */
+.overlay-content p:last-of-type .word:nth-child(1) { animation-delay: 7.5s; animation-name: mysteriousDrop; position: relative; transform-style: preserve-3d; z-index: -10; transition: z-index 0.1s ease; }
 
 /* 3D hover effects for overlay text */
 .overlay-content h2,
@@ -426,6 +504,10 @@ canvas {
 
 .overlay-content p:first-of-type:hover {
   text-shadow: 0 0 12px rgba(128, 179, 255, 0.6);
+}
+
+.overlay-content p:nth-of-type(2):hover {
+  text-shadow: 0 0 12px rgba(255, 179, 128, 0.6);
 }
 
 .overlay-content p:last-of-type:hover {
@@ -1090,3 +1172,106 @@ canvas {
     z-index: 1;
   }
 }
+
+/* ────────────── Evolution Stage Filters ────────────── */
+
+/* Smooth transition for visual evolution */
+#sonicImage {
+  transition: filter 0.5s ease;
+  filter: hue-rotate(0deg);
+}
+
+/* Evolution color stages */
+#sonicImage.blue-form { filter: hue-rotate(0deg) saturate(1.25)  contrast(1.2)!important; }
+#sonicImage.yellow-form { filter: hue-rotate(179deg) saturate(2.3) brightness(1.3)contrast(1.0)!important; }
+#sonicImage.green-form { filter: hue-rotate(200deg) saturate(1.00) contrast(1.4)!important; }
+#sonicImage.red-form { filter: hue-rotate(150deg) brightness(0.9)saturate(3.2) contrast(1.5)!important; }
+#sonicImage.white-form { 
+  filter: brightness(1.9) saturate(0.3) contrast(1.4) drop-shadow(0 0 1px #ffffff98)  !important; 
+}
+
+/* ============================================================================
+   TRANSCENDENCE ANIMATION
+   ============================================================================ */
+
+/* Transcendence animation for final evolution */
+.sonic-container.transcending {
+  animation: transcendRise 4s ease-out forwards;
+  z-index: 100;
+}
+
+.sonic-container img.transcending {
+  animation: transcendGlow 4s ease-out forwards;
+  filter: brightness(2.5) saturate(0.2) contrast(1.5) drop-shadow(0 0 20px #ffffff) 
+          drop-shadow(0 0 40px #ffff00) drop-shadow(0 0 60px #00ffff) !important;
+}
+
+@keyframes transcendRise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(-200px) scale(1.3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-500px) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes transcendGlow {
+  0% {
+    filter: brightness(1.9) saturate(0.3) contrast(1.4) drop-shadow(0 0 1px #ffffff98) !important;
+  }
+  20% {
+    filter: brightness(2.2) saturate(0.2) contrast(1.5) drop-shadow(0 0 10px #ffffff) 
+            drop-shadow(0 0 20px #ffff00) !important;
+  }
+  60% {
+    filter: brightness(2.5) saturate(0.1) contrast(1.6) drop-shadow(0 0 20px #ffffff) 
+            drop-shadow(0 0 40px #ffff00) drop-shadow(0 0 60px #00ffff) !important;
+  }
+  100% {
+    filter: brightness(3.0) saturate(0.0) contrast(1.8) drop-shadow(0 0 40px #ffffff) 
+            drop-shadow(0 0 80px #ffff00) drop-shadow(0 0 120px #00ffff) !important;
+  }
+}
+
+/* Light trail particles */
+.light-particle {
+  position: absolute;
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(to top, 
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 0, 0.7) 30%,
+    rgba(0, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0.0) 100%
+  );
+  border-radius: 50%;
+  animation: particleRise 3s ease-out forwards;
+  z-index: 99;
+}
+
+@keyframes particleRise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-150px) scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-400px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Evolution color stages */
