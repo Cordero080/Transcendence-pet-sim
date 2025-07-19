@@ -1,59 +1,45 @@
 console.log("⚡️⚡️⚡️⚡️ ¡ ENGAGED ! ⚡️⚡️⚡️⚡️");
 
-// ⚠️ TEMPORARY EVOLUTION TESTING MODE ⚠️
-// - Stat decay is disabled
-// - Game over logic is disabled
-// - Aging is set to 1 second per age for rapid evolution testing
-// - Pet will evolve through all color stages without interruption
+// ⚠️ BALANCED EVOLUTION AND SURVIVAL SYSTEM ⚠️
+// - Game over triggers when: hunger ≥ 10, fun ≤ 0, sleepiness ≥ 10
+// - Evolution: Press all 3 buttons → wait 5 seconds → evolve
+// - Stat decay: Base 7s, Fast 2s (gives time for evolution)
+// - Balance: Manage stats while working toward evolution!
 
-// ────────────── GLOBAL VARIABLES ──────────────
+// ────────────── GLOBAL VARIABLES & CONFIGURATION ──────────────
+
+// Game State Variables
 let myPet;
-let gameStarted = false; // Track if the game has been started
-let backgroundMusic; // Background music audio element
+let gameStarted = false;
+let currentAnimationTimer = null;
+let backgroundMusic;
 
-// Button tracking for evolution system
+// Evolution System Variables
 let buttonTracker = {
   feed: false,
   dance: false,
   sleep: false,
 };
+let evolutionTimeout = null;
 
-const evolutionStages = [
-  {
-    stage: "blue",
-    age: 0,
-    class: "blue-form",
-    message: " I've evolved into Blue Form! So, this is life!",
-  },
-  {
-    stage: "yellow",
-    age: 5,
-    class: "yellow-form",
-    message:
-      " I'm Yellow now! I've learned that the foolish seek joy in the distance, and the wise grow it under their feet!",
-  },
-  {
-    stage: "green",
-    age: 10,
-    class: "green-form",
-    message: " I've evolved to green! This is DIFFERENT!",
-  },
-  {
-    stage: "red",
-    age: 15,
-    class: "red-form",
-    message: " I've become Red!",
-  },
-  {
-    stage: "white",
-    age: 20,
-    class: "white-form",
-    message: "⚪ I have transcended!",
-  },
-];
+// Timer System Variables
+let statTimers = {
+  hunger: null,
+  fun: null,
+  sleepiness: null,
+};
+let slowedTimers = {
+  hunger: false,
+  fun: false,
+  sleepiness: false,
+};
+let currentFastStat = null;
 
+// Game Configuration
 const gameSettings = {
-  ageInterval: 10000, // TEMPORARY: Fast aging for rapid evolution testing (1 second per age)
+  ageInterval: 15000,
+  baseDecayRate: 7000,
+  fastDecayRate: 2000,
 };
 
 // ────────────── PET CLASS ──────────────
@@ -66,31 +52,15 @@ class Pet {
     this.fun = 10;
     this.stage = "egg";
     this.ageInterval = null;
-    this.decayInterval = null;
-    this.showingEvolutionMessage = false; // Flag to track evolution messages
-    this.evolutionLevel = 0; // Track current evolution level (0-4 for blue,yellow,green,red,white)
-    this.showingActionMessage = false; // Flag to track feeding/dancing/sleeping messages
+    this.showingEvolutionMessage = false;
+    this.evolutionLevel = 0;
+    this.showingActionMessage = false;
   }
 
   petAges() {
     console.log(`Pet aging...`);
     this.age++;
     console.log(`🎂 Happy BDAY! Your pet is now ${this.age} years old!`);
-
-    // TEMPORARY: Commenting out age-based evolution - now using button-based evolution
-    /*
-    // Check for age-based game over
-    if (this.age >= 25) {
-      this.gameOver("age");
-      return;
-    }
-
-    // Data-driven evolution check
-    const nextStage = evolutionStages.find((stage) => this.age === stage.age);
-    if (nextStage) {
-      this.evolve();
-    }
-    */
   }
 
   hatching() {
@@ -133,84 +103,177 @@ class Pet {
     }, gameSettings.ageInterval);
   }
   startStatDecay() {
-    // TEMPORARY: Commenting out stat decay for rapid evolution testing
-    /*
-    this.decayInterval = setInterval(() => {
-      this.hunger = Math.min(10, this.hunger + 1);
-      this.sleepiness = Math.min(10, this.sleepiness + 1);
-      this.fun = Math.max(0, this.fun - 1);
+    console.log("🎯 Starting dynamic stat decay system");
 
-      console.log(
-        `Decay: Hunger ${this.hunger}, Sleepiness ${this.sleepiness}, Fun ${this.fun}`
-      );
+    // Choose a random stat to decay faster
+    this.chooseFastDecayStat();
 
-      // Apply visual effects when close to death
-      const sonicImage = document.getElementById("sonicImage");
-      if (sonicImage) {
-        if (this.hunger >= 10 && this.sleepiness >= 10 && this.fun <= 2) {
-          // Very close to death - apply grey effect
-          sonicImage.style.filter = "grayscale(100%) brightness(0.5)";
-          sonicImage.style.opacity = "0.7";
-        } else {
-          // Reset to normal appearance
-          sonicImage.style.filter = "";
-          sonicImage.style.opacity = "1";
+    // Start individual timers for each stat
+    this.startHungerTimer();
+    this.startFunTimer();
+    this.startSleepinessTimer();
+  }
+
+  chooseFastDecayStat() {
+    const stats = ["hunger", "fun", "sleepiness"];
+    currentFastStat = stats[Math.floor(Math.random() * stats.length)];
+    console.log(
+      `⚡ ${currentFastStat.toUpperCase()} timer is now decaying 2x faster!`
+    );
+
+    // Update UI to show which timer is fast
+    this.updateTimerIndicators();
+  }
+
+  startHungerTimer() {
+    const rate =
+      currentFastStat === "hunger"
+        ? gameSettings.fastDecayRate
+        : gameSettings.baseDecayRate;
+
+    statTimers.hunger = this.createStatTimer("hunger", rate);
+  }
+
+  startFunTimer() {
+    const rate =
+      currentFastStat === "fun"
+        ? gameSettings.fastDecayRate
+        : gameSettings.baseDecayRate;
+
+    statTimers.fun = this.createStatTimer("fun", rate);
+  }
+
+  startSleepinessTimer() {
+    const rate =
+      currentFastStat === "sleepiness"
+        ? gameSettings.fastDecayRate
+        : gameSettings.baseDecayRate;
+
+    statTimers.sleepiness = this.createStatTimer("sleepiness", rate);
+  }
+
+  // Helper method to create a timer with specified rate
+  createStatTimer(timerType, rate) {
+    const timerActions = {
+      hunger: () => {
+        this.hunger = Math.min(10, this.hunger + 1);
+        if (this.hunger >= 10) {
+          console.log("💀 CRITICAL: Pet is starving!");
+          this.triggerGameOver(
+            "Your pet vanished into the void. You are not worthy!"
+          );
+          return;
         }
-      }
+        this.updateTimerDisplay();
+      },
+      fun: () => {
+        this.fun = Math.max(0, this.fun - 1);
+        if (this.fun <= 0) {
+          console.log("💀 CRITICAL: Pet is extremely bored!");
+          this.triggerGameOver(
+            "Your jaded pet vanished into oblivion. You are not worthy!"
+          );
+          return;
+        }
+        this.updateTimerDisplay();
+      },
+      sleepiness: () => {
+        this.sleepiness = Math.min(10, this.sleepiness + 1);
+        if (this.sleepiness >= 10) {
+          console.log("💀 CRITICAL: Pet is exhausted!");
+          this.triggerGameOver(
+            "Your pets vitality was drained! Why are you like this? lmao"
+          );
+          return;
+        }
+        this.updateTimerDisplay();
+      },
+    };
 
-      // Game over only when ALL stats are at their worst: hunger 10, sleepiness 10, fun 0
-      if (this.hunger >= 10 && this.sleepiness >= 10 && this.fun <= 0) {
-        this.gameOver("stats");
-        return;
-      }
-
-      render(); // update text
-    }, gameSettings.ageInterval); // Same speed as aging timer
-    */
+    return setInterval(timerActions[timerType], rate);
   }
 
-  passout() {
-    console.log(`💤 ${this.name} has passed out! 💤`);
-    // TEMPORARY: Commenting out game over for rapid evolution testing
-    // this.gameOver("stats");
-  }
+  // Slow down individual timer when button is clicked (50% slower = 2x the interval)
+  slowDownIndividualTimer(timerType) {
+    if (statTimers[timerType]) {
+      clearInterval(statTimers[timerType]);
 
-  gameOver(reason) {
-    console.log(`🎮 GAME OVER! Reason: ${reason}`);
+      // Get the current rate and make it 2x slower (50% slower)
+      const currentRate =
+        currentFastStat === timerType
+          ? gameSettings.fastDecayRate
+          : gameSettings.baseDecayRate;
+      const slowedRate = currentRate * 2; // 2x slower (50% speed)
 
-    // Stop all timers
-    this.stopAlltimers();
-
-    // Update the UI based on game over reason
-    const petChat = document.querySelector(".infoBox_petChat");
-    const sonicImage = document.getElementById("sonicImage");
-
-    if (reason === "age") {
-      if (petChat) {
-        petChat.textContent = `💀 Game Over! ${this.name} lived to age ${this.age} and passed away naturally.`;
-      }
-      console.log(`${this.name} died of old age at ${this.age} years old.`);
-    } else if (reason === "stats") {
-      if (petChat) {
-        petChat.textContent = `💀 Game Over! ${this.name} died from neglect. Take better care next time!`;
-      }
       console.log(
-        `${this.name} died from poor care (hunger: ${this.hunger}, sleep: ${this.sleepiness}, fun: ${this.fun}).`
+        `🐌 ${timerType} timer slowed down by 50% (${currentRate}ms → ${slowedRate}ms)`
       );
-    }
 
-    // Optional: Add death visual effect
-    if (sonicImage) {
-      sonicImage.style.filter = "grayscale(100%) brightness(0.5)";
-      sonicImage.style.opacity = "0.7";
-    }
+      // Mark this timer as slowed down
+      slowedTimers[timerType] = true;
 
-    // Optional: Show game over screen after delay
-    setTimeout(() => {
-      if (confirm("Game Over! Would you like to play again?")) {
-        resetGame();
+      // Restart the timer at the slower rate
+      statTimers[timerType] = this.createStatTimer(timerType, slowedRate);
+    }
+  }
+
+  // Restart all timers (called when all buttons have been pressed)
+  restartAllTimers() {
+    console.log("🔄 Restarting all timers with new random fast stat");
+    this.stopStatTimers();
+
+    // Reset slowed timer tracking
+    slowedTimers.hunger = false;
+    slowedTimers.fun = false;
+    slowedTimers.sleepiness = false;
+
+    this.chooseFastDecayStat();
+    this.startHungerTimer();
+    this.startFunTimer();
+    this.startSleepinessTimer();
+  }
+
+  stopStatTimers() {
+    Object.keys(statTimers).forEach((stat) => {
+      if (statTimers[stat]) {
+        clearInterval(statTimers[stat]);
+        statTimers[stat] = null;
       }
-    }, 5000); // this gives time for the player to read the message
+    });
+    console.log("⏹️ All stat timers stopped");
+  }
+
+  updateTimerDisplay() {
+    updateTimers(); // Call the global timer update function
+  }
+
+  updateTimerIndicators() {
+    // Add visual indicators for which timer is fast
+    const hungerTimer = document.getElementById("hungerTimer");
+    const funTimer = document.getElementById("funTimer");
+    const sleepTimer = document.getElementById("sleepTimer");
+
+    // Remove fast indicators from all
+    [hungerTimer, funTimer, sleepTimer].forEach((timer) => {
+      if (timer) {
+        timer.classList.remove("fast-decay");
+        // Remove existing fast indicators
+        timer.textContent = timer.textContent.replace(" ⚡", "");
+      }
+    });
+
+    // Add fast indicator to the current fast stat
+    const fastTimer = document.getElementById(
+      currentFastStat === "hunger"
+        ? "hungerTimer"
+        : currentFastStat === "fun"
+        ? "funTimer"
+        : "sleepTimer"
+    );
+
+    if (fastTimer) {
+      fastTimer.classList.add("fast-decay");
+    }
   }
 
   stopAlltimers() {
@@ -218,65 +281,10 @@ class Pet {
       clearInterval(this.ageInterval);
       this.ageInterval = null;
     }
-    if (this.decayInterval) {
-      clearInterval(this.decayInterval);
-      this.decayInterval = null;
-    }
+
+    // Stop stat decay timers
+    this.stopStatTimers();
     console.log("All timers stopped");
-  }
-
-  evolve() {
-    console.log(`🌟 ${this.name} is evolving! 🌟`);
-    const petChat = document.querySelector(".infoBox_petChat");
-
-    // Find the evolution stage for current age
-    const currentEvolution = evolutionStages.find(
-      (stage) => this.age === stage.age
-    );
-
-    if (!currentEvolution) {
-      console.log("No evolution found for age:", this.age);
-      return;
-    }
-
-    // Update stage and display evolution message
-    this.stage = currentEvolution.stage;
-    this.showingEvolutionMessage = true; // Set flag to prevent overwriting
-
-    if (petChat) {
-      petChat.textContent = `Age: ${this.age} | ✨ I'm evolving!`;
-
-      // Show evolution message after a brief delay
-      setTimeout(() => {
-        if (petChat) {
-          const stageEmojis = {
-            blue: "🔵",
-            yellow: "🟡",
-            green: "🟢",
-            red: "🔴",
-            white: "⚪",
-          };
-          const emoji = stageEmojis[currentEvolution.stage] || "✨";
-          petChat.textContent = `Age: ${this.age} | ${emoji} ${
-            currentEvolution.stage.charAt(0).toUpperCase() +
-            currentEvolution.stage.slice(1)
-          } Form - ${currentEvolution.message}`;
-        }
-
-        // Note: showingEvolutionMessage flag will be cleared by the next evolution
-        // This way the message persists until the next evolution occurs
-      }, 1000);
-    }
-
-    // Apply visual changes
-    updatePetVisual(currentEvolution.stage);
-
-    // Special handling for final evolution (transcendence)
-    if (currentEvolution.stage === "white") {
-      setTimeout(() => {
-        this.triggerTranscendence();
-      }, 2000);
-    }
   }
 
   // NEW: Button-based evolution method
@@ -301,13 +309,12 @@ class Pet {
       },
       1: {
         stage: "yellow",
-        message:
-          " The foolish seek joy in the distance, and the wise grow it under their feet!",
+        message: " Yellow form! The wise grow joy under their feet!",
       },
-      2: { stage: "green", message: " I'm now Green! Growing stronger!" },
+      2: { stage: "green", message: "Green form! Growing stronger!" },
       3: {
         stage: "red",
-        message: " I've become Red! Power surges through me!",
+        message: " 🔥 Red form! FURY and POWER surge through me!",
       },
       4: {
         stage: "white",
@@ -405,11 +412,11 @@ class Pet {
     if (!sonicContainer) return;
 
     // Create multiple light trail particles
-    for (let i = 0; i < 20; i++) {
-      const particle = document.createElement("div");
+    for (let i = 0; i < 30; i++) {
+      const particle = document.createElement("div"); // this loop
       particle.className = "light-particle";
       particle.style.left = Math.random() * 100 + "%";
-      particle.style.animationDelay = i * 0.1 + "s";
+      particle.style.animationDelay = i * 0.1 + "s"; //
       sonicContainer.appendChild(particle);
 
       // Remove particle after animation
@@ -420,46 +427,112 @@ class Pet {
       }, 5000);
     }
   }
+
+  // Game over functionality
+  triggerGameOver(reason) {
+    console.log("💀 GAME OVER:", reason);
+
+    // Stop all timers
+    this.stopAlltimers();
+
+    // Clear any evolution timeout
+    if (evolutionTimeout) {
+      clearTimeout(evolutionTimeout);
+      evolutionTimeout = null;
+    }
+
+    // Show game over overlay
+    showGameOverOverlay(reason);
+  }
 } // End of Pet class
 
-// ────────────── BUTTON TRACKING FUNCTIONS ──────────────
+// ────────────── EVOLUTION & BUTTON TRACKING SYSTEM ──────────────
+
 function markButtonPressed(buttonType) {
-  if (buttonTracker.hasOwnProperty(buttonType)) {
+  if (buttonTracker.hasOwnProperty(buttonType) && myPet) {
     buttonTracker[buttonType] = true;
+
     console.log(
       `${buttonType} button pressed - tracking updated:`,
       buttonTracker
     );
+
+    // Slow down the specific timer for this button by 50%
+    const timerMap = {
+      feed: "hunger",
+      dance: "fun",
+      sleep: "sleepiness",
+    };
+    myPet.slowDownIndividualTimer(timerMap[buttonType]);
+
     updateEvolutionIndicators();
+
+    // Check if evolution should be triggered FIRST
+    checkButtonEvolution();
+
+    // Then handle timer restart if all buttons have been pressed
+    if (buttonTracker.feed && buttonTracker.dance && buttonTracker.sleep) {
+      console.log(
+        "🔄 All buttons pressed! Restarting all timers with new fast stat..."
+      );
+      // Restart all timers with new random fast stat
+      myPet.restartAllTimers();
+    }
   }
 }
 
 function checkButtonEvolution() {
+  console.log("🔍 Checking button evolution. Current state:", buttonTracker);
+
   // Check if all three buttons have been pressed
   if (buttonTracker.feed && buttonTracker.dance && buttonTracker.sleep) {
-    console.log("🌟 All buttons pressed! Evolution triggered!");
+    console.log(
+      "🌟 All buttons pressed! Evolution will trigger in 5 seconds..."
+    );
 
-    // Special handling for white stage (transcendence)
-    if (myPet && myPet.evolutionLevel === 4) {
-      const petChat = document.querySelector(".infoBox_petChat");
-      if (petChat) {
-        petChat.textContent =
-          "⚪ Transcendence imminent... preparing for the beyond...";
-      }
-
-      // 5-second delay before transcendence
-      setTimeout(() => {
-        myPet.triggerTranscendence();
-      }, 5000);
-    } else {
-      // Normal evolution
-      if (myPet) {
-        myPet.evolveToNextStage();
-      }
+    // Clear any existing evolution timeout
+    if (evolutionTimeout) {
+      console.log("⚠️ Clearing existing evolution timeout");
+      clearTimeout(evolutionTimeout);
     }
 
-    // Reset button tracker for next evolution cycle
-    resetButtonTracker();
+    // Set evolution to occur 5 seconds after the last button press
+    evolutionTimeout = setTimeout(() => {
+      console.log("🌟 5 seconds elapsed - triggering evolution!");
+
+      // Special handling for white stage (transcendence)
+      if (myPet && myPet.evolutionLevel === 4) {
+        console.log(
+          "🌟 Pet is at max evolution level (4) - triggering transcendence!"
+        );
+        const petChat = document.querySelector(".infoBox_petChat");
+        if (petChat) {
+          petChat.textContent =
+            "⚪ I feel strange...Am I transcending this realm?...";
+        }
+
+        // 5-second delay before transcendence (in addition to the 5-second wait)
+        setTimeout(() => {
+          myPet.triggerTranscendence();
+        }, 5000);
+      } else {
+        // Normal evolution
+        console.log(
+          `🌟 Normal evolution - current level: ${myPet?.evolutionLevel}`
+        );
+        if (myPet) {
+          myPet.evolveToNextStage();
+        }
+      }
+
+      // Reset button tracker for next evolution cycle
+      resetButtonTracker();
+      evolutionTimeout = null;
+    }, 5000); // 5 seconds delay
+
+    console.log("⏰ Evolution timeout set for 5 seconds");
+  } else {
+    console.log("❌ Not all buttons pressed yet:", buttonTracker);
   }
 }
 
@@ -469,6 +542,13 @@ function resetButtonTracker() {
     dance: false,
     sleep: false,
   };
+
+  // Clear any pending evolution timeout
+  if (evolutionTimeout) {
+    clearTimeout(evolutionTimeout);
+    evolutionTimeout = null;
+  }
+
   updateEvolutionIndicators();
   console.log("Button tracker reset for next evolution cycle");
 }
@@ -481,52 +561,52 @@ function updateEvolutionIndicators() {
 
   // Add indicators to show which buttons have been pressed
   if (feedIndicator) {
-    const indicator = buttonTracker.feed ? " ✅" : " ⭕";
+    const indicator = buttonTracker.feed ? " ✓" : " ⭕";
     if (
-      !feedIndicator.textContent.includes("✅") &&
+      !feedIndicator.textContent.includes("✓") &&
       !feedIndicator.textContent.includes("⭕")
     ) {
       feedIndicator.textContent += indicator;
     } else {
       feedIndicator.textContent = feedIndicator.textContent.replace(
-        / [✅⭕]/,
+        / [✓⭕]/,
         indicator
       );
     }
   }
 
   if (danceIndicator) {
-    const indicator = buttonTracker.dance ? " ✅" : " ⭕";
+    const indicator = buttonTracker.dance ? " ✓" : " ⭕";
     if (
-      !danceIndicator.textContent.includes("✅") &&
+      !danceIndicator.textContent.includes("✓") &&
       !danceIndicator.textContent.includes("⭕")
     ) {
       danceIndicator.textContent += indicator;
     } else {
       danceIndicator.textContent = danceIndicator.textContent.replace(
-        / [✅⭕]/,
+        / [✓⭕]/,
         indicator
       );
     }
   }
 
   if (sleepIndicator) {
-    const indicator = buttonTracker.sleep ? " ✅" : " ⭕";
+    const indicator = buttonTracker.sleep ? " ✓" : " ⭕";
     if (
-      !sleepIndicator.textContent.includes("✅") &&
+      !sleepIndicator.textContent.includes("✓") &&
       !sleepIndicator.textContent.includes("⭕")
     ) {
       sleepIndicator.textContent += indicator;
     } else {
       sleepIndicator.textContent = sleepIndicator.textContent.replace(
-        / [✅⭕]/,
+        / [✓⭕]/,
         indicator
       );
     }
   }
 }
 
-// ────────────── BUTTON STATE MANAGEMENT ──────────────
+// ────────────── UI & BUTTON STATE MANAGEMENT ──────────────
 function updateButtonStates() {
   const buttons = document.querySelectorAll(".Buttons");
   const feedButton = buttons[0];
@@ -548,7 +628,7 @@ function updateButtonStates() {
   }
 }
 
-// ────────────── GAME FUNCTIONS ──────────────
+// ────────────── CORE GAME LOGIC ──────────────
 function startGame() {
   console.log("🎮 Starting new game...");
   myPet = new Pet("Sonic");
@@ -564,6 +644,9 @@ function startGame() {
 function resetGame() {
   console.log("🔄 Resetting game...");
 
+  // Hide game over overlay if it's shown
+  hideGameOverOverlay();
+
   // Reset game state
   gameStarted = false; // Disable action buttons
   updateButtonStates(); // Update visual state of buttons
@@ -573,8 +656,26 @@ function resetGame() {
     myPet.stopAlltimers();
   }
 
+  // Clear any active animation timers
+  if (currentAnimationTimer) {
+    clearTimeout(currentAnimationTimer);
+    currentAnimationTimer = null;
+  }
+
   // Reset button tracking
   resetButtonTracker();
+
+  // Reset timer system
+  currentFastStat = null;
+  slowedTimers.hunger = false;
+  slowedTimers.fun = false;
+  slowedTimers.sleepiness = false;
+  Object.keys(statTimers).forEach((stat) => {
+    if (statTimers[stat]) {
+      clearInterval(statTimers[stat]);
+      statTimers[stat] = null;
+    }
+  });
 
   // Hide sonic and show egg again
   const sonicImage = document.getElementById("sonicImage");
@@ -614,22 +715,22 @@ function resetGame() {
   const petChat = document.querySelector(".infoBox_petChat");
 
   if (petChat) {
-    petChat.textContent = "...\"Feed ME'";
+    petChat.textContent = "...Feed ME";
   }
 
   if (hungerTimer) {
     hungerTimer.textContent = "Hunger: 0";
-    hungerTimer.classList.remove("low", "medium", "high");
+    hungerTimer.classList.remove("low", "medium", "high", "fast-decay");
     hungerTimer.classList.add("high"); // Low hunger is good (green)
   }
   if (funTimer) {
     funTimer.textContent = "Fun: 10";
-    funTimer.classList.remove("low", "medium", "high");
+    funTimer.classList.remove("low", "medium", "high", "fast-decay");
     funTimer.classList.add("high"); // High fun is good (green)
   }
   if (sleepTimer) {
     sleepTimer.textContent = "Sleep: 0";
-    sleepTimer.classList.remove("low", "medium", "high");
+    sleepTimer.classList.remove("low", "medium", "high", "fast-decay");
     sleepTimer.classList.add("high"); // Low sleepiness is good (green)
   }
 
@@ -696,8 +797,42 @@ document.addEventListener("DOMContentLoaded", () => {
   setup3DTextHover();
   setupBackgroundMusic(); // Initialize background music
   updateButtonStates(); // Initialize buttons as disabled
-  //startGame(); // Call to begin game logic
 });
+
+// ────────────── ANIMATION HELPER ──────────────
+function playAnimation(animationSrc, duration, messageText) {
+  const sonicImage = document.getElementById("sonicImage");
+  const petChat = document.querySelector(".infoBox_petChat");
+
+  if (!sonicImage || sonicImage.style.display === "none") return;
+
+  // Clear any existing animation timer to allow interruption
+  if (currentAnimationTimer) {
+    clearTimeout(currentAnimationTimer);
+    currentAnimationTimer = null;
+  }
+
+  // Set action message flag and display message
+  if (myPet) {
+    myPet.showingActionMessage = true;
+    if (!myPet.showingEvolutionMessage && petChat) {
+      petChat.textContent = messageText;
+    }
+  }
+
+  // Start the animation
+  sonicImage.src = animationSrc;
+
+  // Set timer to return to normal state after animation completes
+  currentAnimationTimer = setTimeout(() => {
+    sonicImage.src = "resources/sonic.gif";
+    if (myPet) {
+      myPet.showingActionMessage = false; // Clear action message flag
+    }
+    render(); // Update status after animation
+    currentAnimationTimer = null; // Clear the timer reference
+  }, duration);
+}
 
 // Dropdown menu toggle
 function setupDropdownMenu() {
@@ -736,28 +871,19 @@ function setupFeedAndDance() {
 
       myPet.hunger = Math.max(0, myPet.hunger - 2); // decrease hunger
 
-      // Set action message flag and display feeding message
-      myPet.showingActionMessage = true;
-      if (!myPet.showingEvolutionMessage) {
-        petChat.textContent = "🍽️ Yum! THANKS! I'm not a fan of being HANGRY!";
-      }
-
       console.log("Hunger level:", myPet.hunger);
 
-      // Mark button as pressed and check for evolution
+      // Mark button as pressed (this will automatically check for evolution)
       markButtonPressed("feed");
-      checkButtonEvolution();
 
       updateTimers(); // Update timers immediately
 
-      if (sonicImage.style.display !== "none") {
-        sonicImage.src = "resources/sonic-eats-5.gif";
-        setTimeout(() => {
-          sonicImage.src = "resources/sonic.gif";
-          myPet.showingActionMessage = false; // Clear action message flag
-          render(); // Update status after animation
-        }, 8000); // Increased to 8 seconds to let eating animation complete fully
-      }
+      // Play feeding animation with proper interruption handling
+      playAnimation(
+        "resources/sonic-eats-5.gif",
+        8000,
+        "🍽️ Yum! THANKS! I'm not a fan of being HANGRY!"
+      );
     });
   }
 
@@ -770,29 +896,19 @@ function setupFeedAndDance() {
 
       myPet.fun = Math.min(10, myPet.fun + 2); // increase fun
 
-      // Set action message flag and display dancing message
-      myPet.showingActionMessage = true;
-      if (!myPet.showingEvolutionMessage) {
-        petChat.textContent =
-          "Aww, yeah! Let's get BUSY! Watch me bust these interglactic MOVES!";
-      }
-
       console.log("Fun level:", myPet.fun);
 
-      // Mark button as pressed and check for evolution
+      // Mark button as pressed (this will automatically check for evolution)
       markButtonPressed("dance");
-      checkButtonEvolution();
 
       updateTimers(); // Update timers immediately
 
-      if (sonicImage.style.display !== "none") {
-        sonicImage.src = "resources/sonic-dance2.gif";
-        setTimeout(() => {
-          sonicImage.src = "resources/sonic.gif";
-          myPet.showingActionMessage = false; // Clear action message flag
-          render(); // Update status after animation
-        }, 26000); // Doubled to 26 seconds to let dance animation run twice completely
-      }
+      // Play dancing animation with proper interruption handling
+      playAnimation(
+        "resources/sonic-dance2.gif",
+        10000,
+        "Aww, yeah! Let's get BUSY! Watch me bust these interglactic MOVES!"
+      );
     });
   }
 
@@ -805,29 +921,17 @@ function setupFeedAndDance() {
 
       myPet.sleepiness = Math.max(0, myPet.sleepiness - 2); // decrease sleepiness
 
-      // Set action message flag and display sleeping message
-      myPet.showingActionMessage = true;
-      if (!myPet.showingEvolutionMessage) {
-        petChat.textContent = "😴 Zzzz... That nap helped!";
-      }
-
       console.log("Sleepiness level:", myPet.sleepiness);
 
-      // Mark button as pressed and check for evolution
+      // Mark button as pressed (this will automatically check for evolution)
       markButtonPressed("sleep");
-      checkButtonEvolution();
 
-      // Display sleeping animation
-      if (sonicImage.style.display !== "none") {
-        sonicImage.src = "resources/sonic-sleeps.gif";
-
-        // Return to normal after sleeping animation completes fully
-        setTimeout(() => {
-          sonicImage.src = "resources/sonic.gif";
-          myPet.showingActionMessage = false; // Clear action message flag
-          render(); // Update status after animation
-        }, 6000); // Increased to 6 seconds to let sleeping animation complete fully
-      }
+      // Play sleeping animation with proper interruption handling
+      playAnimation(
+        "resources/sonic-sleeps.gif",
+        6000,
+        " Zzzz... That nap helped!"
+      );
 
       updateTimers(); // Update timers immediately
       render(); // Update status immediately
@@ -906,6 +1010,8 @@ function setup3DTextHover() {
   });
 }
 
+// ────────────── DISPLAY & RENDER FUNCTIONS ──────────────
+
 // Update timer displays with current pet stats
 function updateTimers() {
   if (!myPet) return;
@@ -915,7 +1021,24 @@ function updateTimers() {
   const sleepTimer = document.getElementById("sleepTimer");
 
   if (hungerTimer) {
-    hungerTimer.textContent = `Hunger: ${myPet.hunger}`;
+    // Clean previous indicators and update text
+    const baseText = `Hunger: ${myPet.hunger}`;
+    hungerTimer.textContent = baseText;
+
+    // Add speed and status indicators
+    if (!statTimers.hunger) {
+      hungerTimer.textContent += " ⏹️"; // Stopped
+      hungerTimer.classList.remove("fast-decay");
+    } else if (slowedTimers.hunger) {
+      hungerTimer.textContent += " 🐌"; // Slowed down
+      hungerTimer.classList.remove("fast-decay");
+    } else if (currentFastStat === "hunger") {
+      hungerTimer.textContent += " ⚡";
+      hungerTimer.classList.add("fast-decay");
+    } else {
+      hungerTimer.classList.remove("fast-decay");
+    }
+
     // Color code based on hunger level (high hunger is bad)
     hungerTimer.classList.remove("low", "medium", "high");
     if (myPet.hunger >= 8) {
@@ -928,7 +1051,24 @@ function updateTimers() {
   }
 
   if (funTimer) {
-    funTimer.textContent = `Fun: ${myPet.fun}`;
+    // Clean previous indicators and update text
+    const baseText = `Fun: ${myPet.fun}`;
+    funTimer.textContent = baseText;
+
+    // Add speed and status indicators
+    if (!statTimers.fun) {
+      funTimer.textContent += " ⏹️"; // Stopped
+      funTimer.classList.remove("fast-decay");
+    } else if (slowedTimers.fun) {
+      funTimer.textContent += " 🐌"; // Slowed down
+      funTimer.classList.remove("fast-decay");
+    } else if (currentFastStat === "fun") {
+      funTimer.textContent += " ⚡";
+      funTimer.classList.add("fast-decay");
+    } else {
+      funTimer.classList.remove("fast-decay");
+    }
+
     // Color code based on fun level (low fun is bad)
     funTimer.classList.remove("low", "medium", "high");
     if (myPet.fun <= 2) {
@@ -941,7 +1081,24 @@ function updateTimers() {
   }
 
   if (sleepTimer) {
-    sleepTimer.textContent = `Sleep: ${myPet.sleepiness}`;
+    // Clean previous indicators and update text
+    const baseText = `Sleep: ${myPet.sleepiness}`;
+    sleepTimer.textContent = baseText;
+
+    // Add speed and status indicators
+    if (!statTimers.sleepiness) {
+      sleepTimer.textContent += " ⏹️"; // Stopped
+      sleepTimer.classList.remove("fast-decay");
+    } else if (slowedTimers.sleepiness) {
+      sleepTimer.textContent += " 🐌"; // Slowed down
+      sleepTimer.classList.remove("fast-decay");
+    } else if (currentFastStat === "sleepiness") {
+      sleepTimer.textContent += " ⚡";
+      sleepTimer.classList.add("fast-decay");
+    } else {
+      sleepTimer.classList.remove("fast-decay");
+    }
+
     // Color code based on sleepiness level (high sleepiness is bad)
     sleepTimer.classList.remove("low", "medium", "high");
     if (myPet.sleepiness >= 8) {
@@ -970,7 +1127,7 @@ function render() {
     if (myPet.hunger >= 8) {
       petChat.textContent = "😩 I'm starving!";
     } else if (myPet.sleepiness >= 8) {
-      petChat.textContent = "🥱 So sleepy...";
+      petChat.textContent = "🥱 I'm shot...";
     } else if (myPet.fun <= 2) {
       petChat.textContent = "😐 I'm bored...";
     } else {
@@ -1029,6 +1186,8 @@ function updatePetVisual(stage) {
   }, 100);
 }
 
+// ────────────── UTILITY & HELPER FUNCTIONS ──────────────
+
 // Background music setup and controls
 function setupBackgroundMusic() {
   backgroundMusic = document.getElementById("backgroundMusic");
@@ -1080,4 +1239,42 @@ function setupBackgroundMusic() {
   } else {
     console.log("🎵 Background music element not found");
   }
+}
+
+// ────────────── GAME OVER SYSTEM ──────────────
+
+function showGameOverOverlay(reason) {
+  const overlay = document.getElementById("gameOverOverlay");
+  const reasonElement = document.getElementById("gameOverReason");
+
+  if (overlay && reasonElement) {
+    reasonElement.textContent = reason;
+    overlay.style.display = "flex";
+
+    // Add pulse animation
+    overlay.classList.add("pulse");
+
+    console.log("💀 Game Over overlay displayed");
+  }
+}
+
+function hideGameOverOverlay() {
+  const overlay = document.getElementById("gameOverOverlay");
+  if (overlay) {
+    overlay.style.display = "none";
+    overlay.classList.remove("pulse");
+  }
+}
+
+function restartGame() {
+  console.log("🔄 Restarting game from game over...");
+
+  // Hide game over overlay
+  hideGameOverOverlay();
+
+  // Reset the game completely
+  resetGame();
+
+  // Start a new game
+  startGame();
 }

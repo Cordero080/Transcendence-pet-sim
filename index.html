@@ -72,7 +72,7 @@
         <ul>
           <li><strong>How to Transcend:</strong></li>
           <li>Feed your pet when it hungers.</li>
-          <li>Dance ton energize and uplift its spirits</li>
+          <li>Dance to energize and uplift its spirits</li>
           <li>Let it rest when it tires.</li>
           <li> Stay balanced - joy, rest, and nourishment are the keys.</li>
           <li>Each stage brings new color and form.</li>
@@ -114,13 +114,25 @@
           <div class="timer-display" id="sleepTimer">Sleep: 0</div>
         </div>
       </div>
-      <div class="infoBox_petChat"> Hello! looks like I'm your new pet!
+      <div class="infoBox_petChat"> Hello! turns out I'm your new pet!
         
     </div>
       </div>
     </div>
 
    </main>
+
+  <!-- Game Over Overlay -->
+  <div id="gameOverOverlay" class="game-over-overlay" style="display: none;">
+    <div class="game-over-content">
+      <h2 class="glitch-text">GAME OVER</h2>
+      <p id="gameOverReason">Your pet has transcended...</p>
+      <div class="game-over-buttons">
+        <button class="game-over-button" onclick="restartGame()">TRY AGAIN</button>
+      </div>
+    </div>
+  </div>
+
 <div class="startButtonContainer">
      <button class="StartButton">START</button>
      <button class="ResetButton">RESET</button>
