@@ -1,3 +1,5 @@
+
+
 /* ============================================================================
    TAMAGOTCHI PET SIMULATOR - CSS STYLES
    =======================/* Sonic dancing animation with slide effect */
@@ -8,6 +10,7 @@
    ============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Doto:wght@100..900&family=Honk&family=Monoton&family=Poiret+One&family=Splash&family=Tektur:wght@400..900&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
 /* ============================================================================
    GLOBAL RESET & BASE STYLES
    ============================================================================ */
@@ -160,6 +163,7 @@ canvas {
   height: 100%;
   display: block;
 }
+
 .infoBox_petChat {
   border: solid 2px rgb(249, 90, 10);
   width: 70%;
@@ -173,7 +177,6 @@ canvas {
   word-wrap: break-word; /* Enable text wrapping */
   white-space: normal; /* Allow text to wrap to multiple lines */
   line-height: 1.4; /* Better line spacing for readability */
-  
   /* Colorful gradient text effect for better legibility */
   background: linear-gradient(45deg, 
     #ff6bb3,     /* Pink */
@@ -189,15 +192,45 @@ canvas {
   -webkit-text-fill-color: transparent;
   color: transparent;
   font-weight: bold;
-  
   /* Subtle glow effect behind the gradient */
   text-shadow: 
     0 0 10px rgba(255, 107, 179, 0.3),    /* Pink glow */
     0 0 15px rgba(128, 179, 255, 0.3),    /* Blue glow */
     0 0 20px rgba(179, 128, 255, 0.3);    /* Purple glow */
-  
   /* Animate the gradient for extra visual appeal */
   animation: gradientShift 2.5s ease infinite;
+}
+
+.overlay-content h2 {
+  /* Animated rainbow gradient, matches infoBox_petChat */
+  background: linear-gradient(45deg, 
+    #ff0000, /* Red */
+    #ff9900, /* Orange */
+    #ff00a2db, /* Yellow */
+    #33ff00, /* Green */
+    #00ffee, /* Cyan */
+    #0066ff, /* Blue */
+    #cc00ff, /* Violet */
+    #ff0080, /* Magenta */
+    #ff0000  /* Red again for seamless loop */
+  );
+  background-size: 100% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-weight: bold;
+  text-shadow: none;
+  animation: gradientShift 2.5s ease infinite;
+}
+
+@keyframes spectrumGradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }
 
 /* Dark background behind the text using pseudo-element */
@@ -230,6 +263,8 @@ canvas {
   box-sizing: border-box;
 }
 
+
+
 button.Buttons {
   padding: 10px 20px;
   font-size: 16px;
@@ -260,6 +295,8 @@ button.Buttons.disabled:hover {
 .StartButton {
   padding: 12px 36px;
   font-size: 0.8em;
+  letter-spacing: 3px;
+  font-family: "Orbitron", sans-serif;
   background: #1e1eeb;
   color: #fff;
   border: none;
@@ -271,6 +308,8 @@ button.Buttons.disabled:hover {
 .ResetButton {
   padding: 12px 36px;
   font-size: 0.8em;
+  letter-spacing: 3px;
+  font-family: "Orbitron", sans-serif;
   background: #9d1eeb;
   color: #eaf8fd;
   border: none;
@@ -278,6 +317,14 @@ button.Buttons.disabled:hover {
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
+
+.StartButton:hover,
+.ResetButton:hover {
+  transform: perspective(200px) rotateX(2deg) rotateY(2deg) scale(1);
+  box-shadow: 0 12px 12px oklch(51.245% 0.27967 294.646), 0 2px 8px rgba(60, 0, 120, 0.18);
+  z-index: 2;
+}
+
 
 .CornerRoundButton {
   position: relative;
@@ -406,7 +453,11 @@ button.Buttons.disabled:hover {
   align-items: center;
   backdrop-filter: blur(5px);
   transition: opacity 0.5s ease-out;
+  
 }
+
+
+
 
 .page-overlay.hidden {
   opacity: 0;
@@ -453,6 +504,7 @@ button.Buttons.disabled:hover {
   background: linear-gradient(45deg, #ad0e5b, #1a4e93, #3d0c82);
   background-size: 200% 200%;
   color: hsl(216, 56%, 79%);
+  font-family: 'Orbitron', sans-serif;
   font-size: 1em;
   padding: 10px 25px;
   border: none;
@@ -464,7 +516,9 @@ button.Buttons.disabled:hover {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   animation: gradientShift 3s ease infinite;
   opacity: 0.8;
+ 
 }
+
 
 .page-overlay .OverlayStartButton:hover {
   transform: translateY(-2px);
@@ -1181,31 +1235,31 @@ button.Buttons.disabled:hover {
   0% {
     transform: translateY(0) translateX(0) translateZ(-300px) rotate(0deg) scale(0.2);
     opacity: 0;
-    filter: blur(10px) brightness(0.7) hue-rotate(0deg);
+    filter:  brightness(0.7) hue-rotate(0deg);
     z-index: -10;
   }
   25% {
     transform: translateY(0) translateX(0) translateZ(-150px) rotate(2deg) scale(0.5);
     opacity: 0.2;
-    filter: blur(6px) brightness(0.9) hue-rotate(60deg);
+    filter:  brightness(0.9) hue-rotate(60deg);
     z-index: -6;
   }
   50% {
     transform: translateY(0) translateX(-5px) translateZ(-50px) rotate(-1deg) scale(0.8);
     opacity: 0.5;
-    filter: blur(3px) brightness(1.1) hue-rotate(120deg);
+    filter:  brightness(1.1) hue-rotate(120deg);
     z-index: -3;
   }
   75% {
     transform: translateY(0) translateX(3px) translateZ(0px) rotate(0.5deg) scale(0.95);
     opacity: 0.8;
-    filter: blur(1px) brightness(1.2) hue-rotate(180deg);
+    filter:  brightness(1.2) hue-rotate(180deg);
     z-index: 0;
   }
   100% {
     transform: translateY(0) translateX(0) translateZ(0px) rotate(0deg) scale(1);
     opacity: 1;
-    filter: blur(0px) brightness(1) hue-rotate(0deg);
+    filter:  brightness(1) hue-rotate(0deg);
     z-index: 1;
   }
 }
@@ -1238,11 +1292,20 @@ button.Buttons.disabled:hover {
 }
 
 .sonic-container img.transcending {
-  animation: transcendGlow 4s ease-in forwards;
-  filter: brightness(2.5) saturate(0.2) contrast(1.5) drop-shadow(0 0 20px #ffffff) 
+  animation: transcendGlow 1s ease-in forwards;
+  filter: brightness(5.5) saturate(0.2) contrast(1.5) drop-shadow(0 0 40px #ffffff) 
           drop-shadow(0 0 40px #ffff00) drop-shadow(0 0 60px #00ffff) !important;
 }
-
+.sonic-container.transcending::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, transparent 70%);
+  animation: particleRise 3s ease-out forwards;
+}
 @keyframes transcendRise {
   0% {
     transform: translateY(0) scale(1);
@@ -1257,7 +1320,7 @@ button.Buttons.disabled:hover {
     opacity: 0.8;
   }
   100% {
-    transform: translateY(-500px) scale(1.5);
+    transform: translateY(-500px) scale(1.3);
     opacity: 0;
   }
 }
@@ -1318,6 +1381,7 @@ button.Buttons.disabled:hover {
   position: fixed;
   top: 0;
   left: 0;
+  
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.9);
@@ -1389,7 +1453,8 @@ button.Buttons.disabled:hover {
 .game-over-button {
   padding: 15px 30px;
   font-size: 0.6em;
-  font-family: "Doto", sans-serif;
+  letter-spacing: 3px;
+  font-family: "Orbitron", sans-serif;
   background: linear-gradient(45deg, #000000, #333333, #000000);
   color: #ff0000;
   border: 2px solid #ff0000;
@@ -1498,6 +1563,3 @@ button.Buttons.disabled:hover {
   }
 }
 
-/* ============================================================================
-   TIMER SPEED INDICATORS
-   ============================================================================ */
