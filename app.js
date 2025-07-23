@@ -1,10 +1,47 @@
 console.log("⚡️⚡️⚡️⚡️ ¡ ENGAGED ! ⚡️⚡️⚡️⚡️");
 
 // ⚠️ BALANCED EVOLUTION AND SURVIVAL SYSTEM ⚠️
-// - Game over triggers when: hunger ≥ 10, fun ≤ 0, sleepiness ≥ 10
+// - Game over triggers when: hunger ≥ 10, fun ≤ 0, sleep ≥ 10
 // - Evolution: Press all 3 buttons → wait 5 seconds → evolve
 // - Stat decay: Base 7s, Fast 2s (gives time for evolution)
 // - Balance: Manage stats while working toward evolution!
+
+// *-------------------------METHODS ----------------*  \\
+//   - Inside petClss (what pet can do)
+//   - Only availabe after you do myPet= new Pet("name")
+
+// +-------------------------+
+// |       Pet Class         |   ← 🐾 Controls PET behavior and state
+// +-------------------------+
+// | - name                 |
+// | - age                  |   ← Tracks stats
+// | - hunger               |
+// | - fun                  |
+// | - sleep           |
+// | - evolutionStage       |
+// +-------------------------+
+// | 🧠 Methods:              |
+// |  • feed()              | ← Pet eats
+// |  • dance()             | ← Pet has fun
+// |  • sleep()             | ← Pet rests
+// |  • render()            | ← Updates UI
+// |  • createStatTimer()   | ← Starts stat decay
+// |  • stopAllTimers()     | ← Stops stat decay
+// |  • triggerGameOver()   | ← Ends the game
+// |  • evolveToNextStage() | ← Evolves pet
+// +-------------------------+
+// *---------------------FUNCTIONS-----------------------* \\
+//  Run indipendentally from Pet Class(outside petClass). Affect game logic or interface globally------- *
+// +------------------------------+
+// |     Global Functions         |   ← 🎮 Controls GAME
+// +------------------------------+
+// |  • startGame()              | ← Sets up new pet and timers
+// |  • resetGame()              | ← Clears everything and restarts
+// |  • updatePetVisual(stage)   | ← Changes how pet looks
+// |  • updateTimers()           | ← Updates hunger/fun/sleep on screen
+// |  • Event Listeners          | ← Detects clicks (feed, dance, sleep)
+// |  • setInterval (age ticker) | ← Tracks cosmetic age
+// +------------------------------+
 
 /*-------------- Constants -------------*/
 
@@ -42,9 +79,9 @@ const stageEmojis = {
 const timerMap = {
   feed: "hunger",
   dance: "fun",
-  sleep: "sleepiness",
+  sleep: "sleep",
 };
-const STAT_TYPES = ["hunger", "fun", "sleepiness"];
+const STAT_TYPES = ["hunger", "fun", "sleep"];
 
 /*---------- Variables (state) ---------*/
 let myPet;
@@ -64,12 +101,12 @@ let evolutionTimeout = null;
 let statTimers = {
   hunger: null,
   fun: null,
-  sleepiness: null,
+  sleep: null,
 };
 let slowedTimers = {
   hunger: false,
   fun: false,
-  sleepiness: false,
+  sleep: false,
 };
 let currentFastStat = null;
 
@@ -109,7 +146,7 @@ class Pet {
     this.name = petName;
     this.age = 0;
     this.hunger = 0;
-    this.sleepiness = 0;
+    this.sleep = 0;
     this.fun = 10;
     this.stage = "egg";
     this.ageInterval = null;
@@ -164,9 +201,9 @@ class Pet {
     // Start individual timers for each stat
     this.startHungerTimer();
     this.startFunTimer();
-    this.startSleepinessTimer();
+    this.startsleepTimer();
   }
-
+  //  Chooses a random stat to decay faster using Math.random()
   chooseFastDecayStat() {
     currentFastStat = STAT_TYPES[Math.floor(Math.random() * STAT_TYPES.length)];
     console.log(
@@ -195,13 +232,13 @@ class Pet {
     statTimers.fun = this.createStatTimer("fun", rate);
   }
 
-  startSleepinessTimer() {
+  startsleepTimer() {
     const rate =
-      currentFastStat === "sleepiness"
+      currentFastStat === "sleep"
         ? gameSettings.fastDecayRate
         : gameSettings.baseDecayRate;
 
-    statTimers.sleepiness = this.createStatTimer("sleepiness", rate);
+    statTimers.sleep = this.createStatTimer("sleep", rate);
   }
 
   // Helper method to create a timer with specified rate
@@ -229,9 +266,9 @@ class Pet {
         }
         this.updateTimerDisplay();
       },
-      sleepiness: () => {
-        this.sleepiness = Math.min(10, this.sleepiness + 1);
-        if (this.sleepiness >= 10) {
+      sleep: () => {
+        this.sleep = Math.min(10, this.sleep + 1);
+        if (this.sleep >= 10) {
           console.log("💀 CRITICAL: Pet is exhausted!");
           this.triggerGameOver(
             "Your pets vitality was drained! Why are you like this? lmao"
@@ -277,12 +314,12 @@ class Pet {
     // Reset slowed timer tracking
     slowedTimers.hunger = false;
     slowedTimers.fun = false;
-    slowedTimers.sleepiness = false;
+    slowedTimers.sleep = false;
 
     this.chooseFastDecayStat();
     this.startHungerTimer();
     this.startFunTimer();
-    this.startSleepinessTimer();
+    this.startsleepTimer();
   }
 
   stopStatTimers() {
@@ -493,7 +530,7 @@ class Pet {
 } // End of Pet class
 
 // ────────────── EVOLUTION & BUTTON TRACKING SYSTEM ──────────────
-
+// this function tracks button presses for evolution. If all buttons are pressed, it triggers evolution
 function markButtonPressed(buttonType) {
   if (buttonTracker.hasOwnProperty(buttonType) && myPet) {
     buttonTracker[buttonType] = true;
@@ -684,7 +721,7 @@ function resetGame() {
   currentFastStat = null;
   slowedTimers.hunger = false;
   slowedTimers.fun = false;
-  slowedTimers.sleepiness = false;
+  slowedTimers.sleep = false;
   Object.keys(statTimers).forEach((stat) => {
     if (statTimers[stat]) {
       clearInterval(statTimers[stat]);
@@ -740,7 +777,7 @@ function resetGame() {
   if (sleepTimer) {
     sleepTimer.textContent = "Sleep: 0";
     sleepTimer.classList.remove("low", "medium", "high", "fast-decay");
-    sleepTimer.classList.add("high"); // Low sleepiness is good (green)
+    sleepTimer.classList.add("high"); // Low sleep is good (green)
   }
 
   // Create new pet instance (ready to hatch again)
@@ -909,9 +946,9 @@ function setupFeedAndDance() {
         return;
       }
 
-      myPet.sleepiness = Math.max(0, myPet.sleepiness - 2); // decrease sleepiness
+      myPet.sleep = Math.max(0, myPet.sleep - 2); // decrease sleep
 
-      console.log("Sleepiness level:", myPet.sleepiness);
+      console.log("sleep level:", myPet.sleep);
 
       // Mark button as pressed (this will automatically check for evolution)
       markButtonPressed("sleep");
@@ -1000,22 +1037,22 @@ function updateTimers() {
       name: "hunger",
       value: myPet.hunger,
       timerEl: hungerTimer,
-      highIsBad: true
+      highIsBad: true,
     },
     {
       name: "fun",
       value: myPet.fun,
       timerEl: funTimer,
-      highIsBad: false
+      highIsBad: false,
     },
     {
-      name: "sleepiness",
-      value: myPet.sleepiness,
+      name: "sleep",
+      value: myPet.sleep,
       timerEl: sleepTimer,
-      highIsBad: true
-    }
+      highIsBad: true,
+    },
   ];
-
+  // Loop through each stat config to update the display. if the timer element is not found, it skips that stat
   statConfigs.forEach(({ name, value, timerEl, highIsBad }) => {
     if (!timerEl) return;
 
@@ -1030,7 +1067,7 @@ function updateTimers() {
       timerEl.classList.remove("fast-decay");
     }
 
-    // Color coding
+    // Color coding. this removes all previous classes before adding new ones
     timerEl.classList.remove("low", "medium", "high");
 
     if (highIsBad) {
@@ -1069,7 +1106,7 @@ function render() {
   if (!myPet.showingEvolutionMessage && !myPet.showingActionMessage) {
     if (myPet.hunger >= 8) {
       petChat.textContent = "😩 I'm starving!";
-    } else if (myPet.sleepiness >= 8) {
+    } else if (myPet.sleep >= 8) {
       petChat.textContent = "🥱 I'm shot...";
     } else if (myPet.fun <= 2) {
       petChat.textContent = "😐 I'm bored...";
@@ -1216,7 +1253,6 @@ function restartGame() {
   startGame();
 }
 /*----------- Event Listeners ----------*/
-/*----------- Event Listeners ----------*/
 
 // Setup helper functions first
 // <-- must come first
@@ -1226,3 +1262,31 @@ setupBackgroundMusic();
 // Required explicit listeners for assignment grading:
 regularStartBtn?.addEventListener("click", startGame);
 resetBtn?.addEventListener("click", resetGame);
+
+// ==================================
+// 📌 METHOD vs FUNCTION REFERENCE #2
+// ==================================
+
+// 🧠 METHODS (Inside the Pet class)
+// These are tied to the pet object. Call with myPet.methodName()
+
+// constructor(name)        --> Initializes pet’s name, age, stats, evolution stage
+// feed()                   --> Lowers hunger, boosts fun, updates UI
+// dance()                  --> Boosts fun, increases sleep, updates UI
+// sleep()                  --> Lowers sleep, increases hunger, updates UI
+// render()                 --> Updates stats on screen
+// createStatTimer()        --> Starts a stat decay timer using setInterval
+// stopAllTimers()          --> Stops hunger/fun/sleep decay
+// triggerGameOver(reason)  --> Ends the game and displays failure reason
+// evolve()                 --> Increments age and calls update visuals
+// evolveToNextStage()      --> Evolves pet to next form and updates message/image
+
+// 🌐 FUNCTIONS (Outside the class)
+// These handle game flow and UI sync
+
+// updateTimers()           --> Syncs DOM to current pet stats
+// updatePetVisual(stage)   --> Updates pet appearance based on current stage
+// startGame()              --> Creates new pet and initializes game
+// resetGame()              --> Clears current game state and restarts
+// setInterval(() => myPet.evolve(), 15000)
+//                          --> Cosmetic age timer (15 sec) for display only
